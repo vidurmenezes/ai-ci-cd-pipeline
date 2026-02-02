@@ -1,8 +1,10 @@
 name: CI with AI Summary
 
 on:
+  push:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   test-and-ai:
