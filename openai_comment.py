@@ -1,31 +1,33 @@
 import os
-import openai
-from github import Github
+from openai import OpenAI
 
-# Load API keys
-openai.api_key = os.environ['OPENAI_API_KEY']
-github_token = os.environ['GITHUB_TOKEN']
-repo_name = os.environ['GITHUB_REPOSITORY']
-pr_number = os.environ['GITHUB_REF'].split('/')[-2]
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Read test results
-with open('result.log', 'r') as f:
-    test_output = f.read()
+# Read CI test results
+with open("result.log", "r") as f:
+    test_results = f.read()
 
-# Prepare prompt for OpenAI
-prompt = f"Summarize the following test results and suggest next steps:\n\n{test_output}"
+# Build prompt for AI
+prompt = f"""
+Here are the test results from CI:
 
-# Call OpenAI API
-response = openai.Completion.create(
-    engine="text-davinci-003",
-    prompt=prompt,
-    max_tokens=100:
+{test_results}
+
+Summarize any failures and provide short suggestions for fixing them.
+"""
+
+# Call OpenAI chat completion API
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": "You are a helpful CI assistant."},
+        {"role": "user", "content": prompt}
+    ],
+    max_tokens=150
 )
 
-summary = response.choices[0].text.strip()
-
-# Post comment on PR
-g = Github(github_token)
-repo = g.get_repo(repo_name)
-pr = repo.get_pull(int(pr_number))
-pr.create_issue_comment(f"🤖 AI Test Summary:\n\n{summary}")
+# Extract and print AI summary
+summary = response.choices[0].message.content
+print("AI SUMMARY:")
+print(summary)

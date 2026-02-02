@@ -9,6 +9,7 @@ on:
 jobs:
   test-and-ai:
     runs-on: ubuntu-latest
+    environment: vm-gpt
 
     steps:
     - uses: actions/checkout@v3
@@ -19,15 +20,17 @@ jobs:
         python-version: '3.x'
 
     - name: Install dependencies
-      run: pip install openai
-
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyGithub openai
+    
     - name: Run tests and save output
       id: test
       run: |
         python -m unittest discover > result.log 2>&1 || true
         cat result.log
       continue-on-error: true
-
+    
     - name: Run OpenAI summary and comment
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
